@@ -2,15 +2,25 @@
 // #include <FastLED.h>
 #include <NimBLEDevice.h>
 
+class MeineServerCallbacks: public NimBLEServerCallbacks {
+  void onConnect(NimBLEServer *pServer) {
+    Serial.print("BLE Client ist verbunden. Adresse: ");
+    Serial.println(pServer->getPeerInfo(0).getAddress());
+  }
+
+  void onDisconnect(NimBLEServer *pServer) {
+    Serial.println("BLE Client ist getrennt.");
+  }
+};
+
 /** Bluetooth LE Characteristic Callbacks. */
 class MeineCallbacks: public NimBLECharacteristicCallbacks {
-  std::int8_t iScoreHeim = 0;
-  std::int8_t iScoreGast = 0;
+  std::int8_t iScoreHeim = 0, iScoreGast = 0;
   
   void onWrite(NimBLECharacteristic* pCharacteristic) {
     std::string rxCommand = pCharacteristic->getValue();
-    
-    Serial.println(rxCommand.c_str());
+
+    // Serial.println(rxCommand.c_str());
 
     switch (std::stoi(rxCommand)) {
       case 10:
@@ -50,14 +60,17 @@ class MeineCallbacks: public NimBLECharacteristicCallbacks {
 
 static NimBLEServer *pServer;
 static NimBLEService *pServiceScore;
-static NimBLECharacteristic *pCharacteristicHeim, *pCharacteristicGast;
+static NimBLECharacteristic *pCharacteristicScore;
 static NimBLEAdvertising *pAdvertising;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Starting Arduino NimBLE Client application...");
 
-  NimBLEDevice::init("ESP32");
+  while (!NimBLEDevice::getInitialized()) {
+    Serial.println("ESP32 NimBLE Server wird gestartet ...");
+    NimBLEDevice::init("ESP32");
+  }
+  Serial.println("ESP32 NimBLE Server ist initialisiert.");
 
   #ifdef ESP_PLATFORM
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); // +9db
@@ -65,17 +78,20 @@ void setup() {
     NimBLEDevice::setPower(9); // +9db
   #endif
 
+  // Server erzeugen
   pServer = NimBLEDevice::createServer();
+  pServer->setCallbacks(new MeineServerCallbacks());
+
+  // Service erzeugen
   pServiceScore = pServer->createService("5C0A");
 
-  pCharacteristicHeim = pServiceScore->createCharacteristic("1111", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  pCharacteristicHeim->setValue("0");
-  pCharacteristicHeim->setCallbacks(new MeineCallbacks());
-  // pCharacteristicGast = pServiceScore->createCharacteristic("2222", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  // pCharacteristicGast->setValue("0");
-  // pCharacteristicGast->setCallbacks(new MeineCallbacks());
+  // Characteristic erzeugen
+  pCharacteristicScore = pServiceScore->createCharacteristic("1111", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+  pCharacteristicScore->setValue("0");
+  pCharacteristicScore->setCallbacks(new MeineCallbacks());
   pServiceScore->start();
 
+  // Advertising starten
   pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(pServiceScore->getUUID()); 
   pAdvertising->start(); 
@@ -83,5 +99,4 @@ void setup() {
 
 // This is the Arduino main loop function.
 void loop() {
-  delay(1000); // Delay a second between loops.
 } // End of loop
