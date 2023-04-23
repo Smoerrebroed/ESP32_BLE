@@ -4,17 +4,47 @@
 
 /** Bluetooth LE Characteristic Callbacks. */
 class MeineCallbacks: public NimBLECharacteristicCallbacks {
-  std::int8_t iScore = 0;
+  std::int8_t iScoreHeim = 0;
+  std::int8_t iScoreGast = 0;
   
   void onWrite(NimBLECharacteristic* pCharacteristic) {
-    std::string rxCharacteristicUUID = pCharacteristic->getUUID().toString(), rxCommand = pCharacteristic->getValue();
-    iScore++;
-    Serial.println(iScore);
-    Serial.println(rxCharacteristicUUID.c_str());
-    if (rxCommand.length() > 0) {
-      Serial.print("Received Value: ");
-      Serial.println(rxCommand.c_str());
+    std::string rxCommand = pCharacteristic->getValue();
+    
+    Serial.println(rxCommand.c_str());
+
+    switch (std::stoi(rxCommand)) {
+      case 10:
+        iScoreHeim = 0;
+      break;
+    
+      case 11:
+        if (iScoreHeim < 9) iScoreHeim++;
+      break;
+
+      case 12:
+        if (iScoreHeim > 0) iScoreHeim--;
+      break;
+
+      case 20:
+        iScoreGast = 0;
+      break;
+
+      case 21:
+        if (iScoreGast < 9) iScoreGast++;
+      break;
+
+      case 22:
+        if (iScoreGast > 0) iScoreGast--;
+      break;
+      
+      default:
+      break;
     }
+
+    Serial.print("Heim: ");
+    Serial.println(iScoreHeim);
+    Serial.print("Gast: ");
+    Serial.println(iScoreGast);
   }  
 };
 
@@ -41,9 +71,9 @@ void setup() {
   pCharacteristicHeim = pServiceScore->createCharacteristic("1111", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
   pCharacteristicHeim->setValue("0");
   pCharacteristicHeim->setCallbacks(new MeineCallbacks());
-  pCharacteristicGast = pServiceScore->createCharacteristic("2222", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  pCharacteristicGast->setValue("0");
-  pCharacteristicGast->setCallbacks(new MeineCallbacks());
+  // pCharacteristicGast = pServiceScore->createCharacteristic("2222", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+  // pCharacteristicGast->setValue("0");
+  // pCharacteristicGast->setCallbacks(new MeineCallbacks());
   pServiceScore->start();
 
   pAdvertising = NimBLEDevice::getAdvertising();
