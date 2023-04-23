@@ -2,7 +2,26 @@
 // #include <FastLED.h>
 #include <NimBLEDevice.h>
 
+/** Bluetooth LE Characteristic Callbacks. */
+class MeineCallbacks: public NimBLECharacteristicCallbacks {
+  std::int8_t iScore = 0;
+  
+  void onWrite(NimBLECharacteristic* pCharacteristic) {
+    std::string rxCharacteristicUUID = pCharacteristic->getUUID().toString(), rxCommand = pCharacteristic->getValue();
+    iScore++;
+    Serial.println(iScore);
+    Serial.println(rxCharacteristicUUID.c_str());
+    if (rxCommand.length() > 0) {
+      Serial.print("Received Value: ");
+      Serial.println(rxCommand.c_str());
+    }
+  }  
+};
+
 static NimBLEServer *pServer;
+static NimBLEService *pServiceScore;
+static NimBLECharacteristic *pCharacteristicHeim, *pCharacteristicGast;
+static NimBLEAdvertising *pAdvertising;
 
 void setup() {
   Serial.begin(115200);
@@ -17,28 +36,18 @@ void setup() {
   #endif
 
   pServer = NimBLEDevice::createServer();
+  pServiceScore = pServer->createService("5C0A");
 
-  NimBLEService *pServiceHeim = pServer->createService("5C01");
-  NimBLECharacteristic *pCharacteristicHeim0 = pServiceHeim->createCharacteristic("0000", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  NimBLECharacteristic *pCharacteristicHeimUp = pServiceHeim->createCharacteristic("0001", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  NimBLECharacteristic *pCharacteristicHeimDown = pServiceHeim->createCharacteristic("0002", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  pCharacteristicHeim0->setValue("Reset");
-  pCharacteristicHeimUp->setValue("Up");
-  pCharacteristicHeimDown->setValue("Down");
-  pServiceHeim->start();
+  pCharacteristicHeim = pServiceScore->createCharacteristic("1111", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+  pCharacteristicHeim->setValue("0");
+  pCharacteristicHeim->setCallbacks(new MeineCallbacks());
+  pCharacteristicGast = pServiceScore->createCharacteristic("2222", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+  pCharacteristicGast->setValue("0");
+  pCharacteristicGast->setCallbacks(new MeineCallbacks());
+  pServiceScore->start();
 
-  NimBLEService *pServiceGast = pServer->createService("5C02");
-  NimBLECharacteristic *pCharacteristicGast0 = pServiceGast->createCharacteristic("1110", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  NimBLECharacteristic *pCharacteristicGastUp = pServiceGast->createCharacteristic("1111", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  NimBLECharacteristic *pCharacteristicGastDown = pServiceGast->createCharacteristic("1112", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-  pCharacteristicGast0->setValue("Reset");
-  pCharacteristicGastUp->setValue("Up");
-  pCharacteristicGastDown->setValue("Down");
-  pServiceGast->start();
-
-  NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(pServiceHeim->getUUID()); 
-  pAdvertising->addServiceUUID(pServiceGast->getUUID()); 
+  pAdvertising = NimBLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(pServiceScore->getUUID()); 
   pAdvertising->start(); 
 } // End of setup.
 
