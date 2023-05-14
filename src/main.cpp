@@ -1,6 +1,45 @@
 #include <Arduino.h>
-// #include <FastLED.h>
+#include <FastLED.h>
 #include <NimBLEDevice.h>
+
+// How many leds in your strip?
+#define NUM_LEDS 35
+
+// For led chips like WS2812, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
+// Clock pin only needed for SPI based chipsets when not using hardware SPI
+#define DATA_PIN_1 14
+#define DATA_PIN_2 16
+
+// Define the array of leds
+CRGB ledsHeim[NUM_LEDS];
+CRGB ledsGast[NUM_LEDS];
+CRGB color[10] = {
+  CRGB::Red,
+  CRGB::Green,
+  CRGB::Blue,
+  CRGB::Yellow,
+  CRGB::White,
+  CRGB::Purple,
+  CRGB::Orange,
+  CRGB::Cyan,
+  CRGB::DarkGreen,
+  CRGB::Magenta
+};
+
+int DigitMatrix[10][35] = {
+    {1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1}, //0
+    {0,0,1,0,0,0,0,1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,1,1,0}, //1
+    {1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1}, //2
+    {1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1}, //3
+    {1,0,0,0,0,0,0,1,0,1,1,0,1,0,0,1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0}, //4
+    {1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1}, //5
+    {1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1}, //6
+    {1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1}, //7
+    {1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1}, //8
+    {1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1}  //9
+  };
 
 class MeineServerCallbacks: public NimBLEServerCallbacks {
   void onConnect(NimBLEServer *pServer) {
@@ -55,6 +94,18 @@ class MeineCallbacks: public NimBLECharacteristicCallbacks {
     Serial.println(iScoreHeim);
     Serial.print("Gast: ");
     Serial.println(iScoreGast);
+
+    for (int j = 0; j < NUM_LEDS; j++) {
+      if (DigitMatrix[iScoreHeim][j])
+        ledsHeim[j] = CRGB::Blue;
+      else ledsHeim[j] = CRGB::Black;
+    }
+    for (int j = 0; j < NUM_LEDS; j++) {
+      if (DigitMatrix[iScoreGast][j])
+        ledsGast[j] = CRGB::Red;
+      else ledsGast[j] = CRGB::Black;
+    }
+    FastLED.show(50);
   }  
 };
 
@@ -65,10 +116,13 @@ static NimBLEAdvertising *pAdvertising;
 
 void setup() {
   Serial.begin(115200);
+  
+  FastLED.addLeds<WS2811, DATA_PIN_1, RGB>(ledsHeim, NUM_LEDS);
+  FastLED.addLeds<WS2811, DATA_PIN_2, RGB>(ledsGast, NUM_LEDS);
 
   while (!NimBLEDevice::getInitialized()) {
     Serial.println("ESP32 NimBLE Server wird gestartet ...");
-    NimBLEDevice::init("ESP32");
+    NimBLEDevice::init("TTC MJK Herten");
   }
   Serial.println("ESP32 NimBLE Server ist initialisiert.");
 
