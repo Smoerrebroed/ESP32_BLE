@@ -45,10 +45,22 @@ class MeineServerCallbacks: public NimBLEServerCallbacks {
   void onConnect(NimBLEServer *pServer) {
     Serial.print("BLE Client ist verbunden. Adresse: ");
     Serial.println(pServer->getPeerInfo(0).getAddress());
+        for (int j = 0; j < NUM_LEDS; j++) {
+      if (DigitMatrix[0][j]) {
+        ledsHeim[j] = CRGB::Blue;
+        ledsGast[j] = CRGB::Red;
+      }
+      else {
+        ledsHeim[j] = CRGB::Black;
+        ledsGast[j] = CRGB::Black;
+      }
+    }
+    FastLED.show(50);
   }
 
   void onDisconnect(NimBLEServer *pServer) {
     Serial.println("BLE Client ist getrennt.");
+    FastLED.show(0);
   }
 };
 
