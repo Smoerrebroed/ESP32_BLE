@@ -9,8 +9,8 @@
 // need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
 // ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
 // Clock pin only needed for SPI based chipsets when not using hardware SPI
-#define DATA_PIN_1 14
-#define DATA_PIN_2 16
+#define DATA_PIN_1 16
+#define DATA_PIN_2 14
 
 // Define the array of leds
 CRGB ledsHeim[NUM_LEDS];
@@ -28,39 +28,41 @@ CRGB color[10] = {
   CRGB::Magenta
 };
 
-int DigitMatrix[10][35] = {
-    {1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1}, //0
-    {0,0,1,0,0,0,0,1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,1,1,0}, //1
-    {1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1}, //2
-    {1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1}, //3
-    {1,0,0,0,0,0,0,1,0,1,1,0,1,0,0,1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0}, //4
-    {1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1}, //5
-    {1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1}, //6
-    {1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1}, //7
-    {1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1}, //8
-    {1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1}  //9
+int farbeHeim = 2;
+int farbeGast = 4;
+
+int DigitMatrix[11][35] = {
+    {0,1,1,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,1,1,0}, //0
+    {0,0,0,1,0, 0,1,1,0,0, 0,1,0,1,0, 0,1,0,0,0, 0,0,0,1,0, 0,1,0,0,0, 0,0,0,1,0}, //1
+    {0,1,1,1,0, 0,1,0,0,0, 0,0,0,1,0, 0,1,1,1,0, 0,1,0,0,0, 0,0,0,1,0, 0,1,1,1,0}, //2
+    {0,1,1,1,0, 0,1,0,0,0, 0,0,0,1,0, 0,1,1,0,0, 0,0,0,1,0, 0,1,0,0,0, 0,1,1,1,0}, //3
+    {0,1,0,0,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,1,1,0, 0,0,0,1,0, 0,1,0,0,0, 0,0,0,1,0}, //4
+    {0,1,1,1,0, 0,0,0,1,0, 0,1,0,0,0, 0,1,1,1,0, 0,0,0,1,0, 0,1,0,0,0, 0,1,1,1,0}, //5
+    {0,1,1,1,0, 0,0,0,1,0, 0,1,0,0,0, 0,1,1,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,1,1,0}, //6
+    {0,1,1,1,0, 0,1,0,0,0, 0,0,0,1,0, 0,1,0,0,0, 0,0,0,1,0, 0,1,0,0,0, 0,0,0,1,0}, //7
+    {0,1,1,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,1,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,1,1,0}, //8
+    {0,1,1,1,0, 0,1,0,1,0, 0,1,0,1,0, 0,1,1,1,0, 0,0,0,1,0, 0,1,0,0,0, 0,1,1,1,0}, //9
+    {1,0,1,1,1, 1,0,1,0,1, 1,0,1,0,1, 1,0,1,0,1, 1,0,1,0,1, 1,0,1,0,1, 1,0,1,1,1}  //10
   };
 
 class MeineServerCallbacks: public NimBLEServerCallbacks {
   void onConnect(NimBLEServer *pServer) {
     Serial.print("BLE Client ist verbunden. Adresse: ");
     Serial.println(pServer->getPeerInfo(0).getAddress());
-        for (int j = 0; j < NUM_LEDS; j++) {
-      if (DigitMatrix[0][j]) {
-        ledsHeim[j] = CRGB::Blue;
-        ledsGast[j] = CRGB::Red;
+
+    FastLED.clear(true);
+      for (int j = 0; j < NUM_LEDS; j++) {
+        if (DigitMatrix[0][j]) {
+          ledsHeim[j] = color[farbeHeim];
+          ledsGast[j] = color[farbeGast];
+        }
       }
-      else {
-        ledsHeim[j] = CRGB::Black;
-        ledsGast[j] = CRGB::Black;
-      }
-    }
-    FastLED.show(50);
+    FastLED.show();
   }
 
   void onDisconnect(NimBLEServer *pServer) {
     Serial.println("BLE Client ist getrennt.");
-    FastLED.show(0);
+    FastLED.clear(true);
   }
 };
 
@@ -73,51 +75,76 @@ class MeineCallbacks: public NimBLECharacteristicCallbacks {
 
     // Serial.println(rxCommand.c_str());
 
-    switch (std::stoi(rxCommand)) {
+    int befehl = std::stoi(rxCommand);
+
+    switch (befehl) {
       case 10:
         iScoreHeim = 0;
-      break;
+        break;
     
       case 11:
-        if (iScoreHeim < 9) iScoreHeim++;
-      break;
+        if (iScoreHeim < 10) iScoreHeim++;
+        break;
 
       case 12:
         if (iScoreHeim > 0) iScoreHeim--;
-      break;
+        break;
+
+      case 13:
+        if (farbeHeim < 9)
+          farbeHeim++;
+        else
+          farbeHeim = 0;
+        break;
 
       case 20:
         iScoreGast = 0;
-      break;
+        break;
 
       case 21:
-        if (iScoreGast < 9) iScoreGast++;
-      break;
+        if (iScoreGast < 10) iScoreGast++;
+        break;
 
       case 22:
         if (iScoreGast > 0) iScoreGast--;
-      break;
+        break;
       
+      case 23:
+        if (farbeGast < 9)
+          farbeGast++;
+        else
+          farbeGast = 0;
+        break;
+
       default:
-      break;
+        break;
     }
 
     Serial.print("Heim: ");
     Serial.println(iScoreHeim);
+    Serial.print("Farbe Heim: ");
+    Serial.println(farbeHeim);
     Serial.print("Gast: ");
     Serial.println(iScoreGast);
+    Serial.print("Farbe Gast: ");
+    Serial.println(farbeGast);
 
-    for (int j = 0; j < NUM_LEDS; j++) {
-      if (DigitMatrix[iScoreHeim][j])
-        ledsHeim[j] = CRGB::Blue;
-      else ledsHeim[j] = CRGB::Black;
+    if (befehl > 9 && befehl < 20) {
+      FastLED[0].clearLeds();
+      for (int j = 0; j < NUM_LEDS; j++) {
+        if (DigitMatrix[iScoreHeim][j])
+          ledsHeim[j] = color[farbeHeim];
+      }
+      FastLED[0].showLeds(100);
     }
-    for (int j = 0; j < NUM_LEDS; j++) {
-      if (DigitMatrix[iScoreGast][j])
-        ledsGast[j] = CRGB::Red;
-      else ledsGast[j] = CRGB::Black;
-    }
-    FastLED.show(50);
+    else if (befehl > 19 && befehl < 30) {
+      FastLED[1].clearLeds();
+      for (int j = 0; j < NUM_LEDS; j++) {
+        if (DigitMatrix[iScoreGast][j])
+          ledsGast[j] = color[farbeGast];
+      };
+      FastLED[1].showLeds(100);
+    } 
   }  
 };
 
