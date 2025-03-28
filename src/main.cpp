@@ -159,7 +159,7 @@ void setup() {
   FastLED.addLeds<WS2811, DATA_PIN_1, RGB>(ledsHeim, NUM_LEDS);
   FastLED.addLeds<WS2811, DATA_PIN_2, RGB>(ledsGast, NUM_LEDS);
 
-  while (!NimBLEDevice::getInitialized()) {
+  while (!NimBLEDevice::isInitialized()) {
     Serial.println("ESP32 NimBLE Server wird gestartet ...");
     NimBLEDevice::init("TTC MJK Herten");
   }
